@@ -3,130 +3,162 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Pronóstico de consumo</title>
+<title>Predictor de consumo</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root{
-    --noche:#12143a; --noche2:#1b1e52; --tinta:#eceaff; --suave:#9c9ac8; --linea:rgba(190,185,255,.14);
-    --hist:#b9b4ff; --pron1:#ff5c93; --pron2:#ffc15a; --alerta:#ff7a6b;
-    --glow:50%;
-    --titulo:"Syne",system-ui,sans-serif; --texto:"Instrument Sans",system-ui,sans-serif;
+    --tinta:#f1f0ff; --suave:#a3a1cc; --tenue:#6f6da0; --linea:rgba(165,160,255,.16);
+    --panel:rgba(16,18,54,.66); --hist:#b9b4ff; --pron1:#ff5c93; --pron2:#ffc15a;
+    --ok:#6ee7a8; --alerta:#ff7a6b; --glow:50%;
+    --sans:"IBM Plex Sans",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
   }
   *{box-sizing:border-box}
-  body{margin:0;min-height:100vh;color:var(--tinta);font:400 16px/1.5 var(--texto);
-    background:radial-gradient(900px 520px at var(--glow) 0%,rgba(255,92,147,.16),transparent 70%),linear-gradient(180deg,var(--noche),#0c0e29);background-attachment:fixed}
-  main{max-width:1160px;margin:0 auto;padding:26px 22px 48px}
-  .barra{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;color:var(--suave);font-size:.92rem}
-  .barra b{font:800 1.05rem var(--titulo);color:var(--tinta);letter-spacing:.01em}
-  .estado{display:flex;align-items:center;gap:8px}
-  .punto{width:9px;height:9px;border-radius:50%;background:var(--suave)}
-  .punto.ok{background:#6ee7a8;box-shadow:0 0 0 0 rgba(110,231,168,.6);animation:pulso 2.2s infinite}
-  .punto.mal{background:var(--alerta)}
-  @keyframes pulso{70%{box-shadow:0 0 0 9px rgba(110,231,168,0)}100%{box-shadow:0 0 0 0 rgba(110,231,168,0)}}
+  body{margin:0;min-height:100vh;color:var(--tinta);font:400 15px/1.5 var(--sans);
+    background:radial-gradient(900px 520px at var(--glow) 0%,rgba(255,92,147,.13),transparent 70%),linear-gradient(180deg,#12143a,#0a0c24);background-attachment:fixed}
+  #fondo{position:fixed;inset:0;width:100%;height:100%;z-index:-1}
+  main{max-width:1240px;margin:0 auto;padding:20px 22px 40px}
+  .num,.mono,td,.kpi .v,.reloj{font-variant-numeric:tabular-nums}
 
-  .error{display:none;margin-top:18px;padding:14px 18px;border-radius:14px;background:rgba(255,122,107,.13);border:1px solid var(--alerta);align-items:center;gap:16px;flex-wrap:wrap}
-  .error.visible{display:flex}
-  .error div{flex:1;min-width:240px}
-  .error strong{display:block;color:var(--alerta);font-family:var(--titulo)}
-  .error button{padding:8px 16px;border-radius:999px;border:1px solid var(--alerta);background:none;color:var(--tinta);font:600 .9rem var(--texto);cursor:pointer}
+  /* cabecera */
+  header{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;padding-bottom:16px;border-bottom:1px solid var(--linea)}
+  .marca{display:flex;align-items:center;gap:12px}
+  .marca svg{flex:none}
+  .marca h1{font:600 1.15rem/1.2 var(--sans);margin:0}
+  .marca p{margin:0;color:var(--suave);font-size:.85rem}
+  .der{display:flex;align-items:center;gap:18px;flex-wrap:wrap;color:var(--suave);font-size:.85rem}
+  .reloj{font-family:var(--mono);color:var(--tinta)}
+  .estado{display:flex;align-items:center;gap:8px;padding:5px 12px;border:1px solid var(--linea);border-radius:999px;background:var(--panel)}
+  .punto{width:8px;height:8px;border-radius:50%;background:var(--tenue)}
+  .punto.ok{background:var(--ok);animation:pulso 2.2s infinite}.punto.mal{background:var(--alerta)}
+  @keyframes pulso{70%{box-shadow:0 0 0 8px rgba(110,231,168,0)}0%{box-shadow:0 0 0 0 rgba(110,231,168,.55)}}
 
-  .lectura{padding:34px 0 6px}
-  .lectura .que{color:var(--suave);font-size:1rem;min-height:1.5em}
-  .lectura .num{font:800 clamp(3.6rem,13vw,8.5rem)/.95 var(--titulo);letter-spacing:-.04em;
-    background:linear-gradient(100deg,var(--pron1),var(--pron2));-webkit-background-clip:text;background-clip:text;color:transparent;transition:filter .2s}
-  .lectura .num.real{background:none;color:var(--hist)}
-  .lectura .rango{color:var(--suave);min-height:1.5em}
-  .lectura h1{font:600 .95rem var(--texto);color:var(--suave);margin:0 0 6px}
+  .error{display:none;margin-top:16px;padding:14px 18px;border-radius:12px;background:rgba(255,122,107,.12);border:1px solid var(--alerta);align-items:center;gap:16px;flex-wrap:wrap}
+  .error.visible{display:flex}.error div{flex:1;min-width:240px}.error strong{display:block;color:var(--alerta)}
+  .boton{padding:8px 14px;border-radius:8px;border:1px solid var(--linea);background:rgba(255,255,255,.04);color:var(--tinta);font:500 .85rem var(--sans);cursor:pointer;transition:border-color .2s,background .2s}
+  .boton:hover{border-color:var(--hist);background:rgba(185,180,255,.1)}
 
-  .lienzo{position:relative;height:min(50vh,440px);min-height:300px;margin-top:6px;touch-action:pan-y}
-  canvas{width:100%;height:100%;display:block;cursor:crosshair}
+  /* rejilla de paneles */
+  .rejilla{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;margin-top:16px}
+  .panel{background:var(--panel);border:1px solid var(--linea);border-radius:14px;backdrop-filter:blur(10px)}
+  .principal{padding:20px 22px 16px}
+  .sin-datos{grid-template-columns:1fr}
+  .sin-datos .lateral,.sin-datos .lectura,.sin-datos .lienzo,.sin-datos .pie-graf{display:none}
+  .lateral{display:flex;flex-direction:column;gap:16px}
+  @media (max-width:980px){.rejilla{grid-template-columns:1fr}}
 
-  .controles{display:flex;flex-wrap:wrap;gap:14px 26px;align-items:center;margin:18px 0 8px}
-  .grupo{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-  .grupo>span{color:var(--suave);font-size:.88rem}
-  .pills{display:flex;gap:6px;flex-wrap:wrap}
-  .pills button{padding:8px 16px;border-radius:999px;border:1px solid var(--linea);background:rgba(255,255,255,.03);color:var(--tinta);font:500 .93rem var(--texto);cursor:pointer;transition:transform .15s,background .2s,border-color .2s}
-  .pills button:hover{transform:translateY(-2px);border-color:var(--hist)}
-  .pills button[aria-pressed="true"]{background:linear-gradient(100deg,var(--pron1),var(--pron2));border-color:transparent;color:#25102a;font-weight:600}
-  select{padding:8px 12px;border-radius:999px;border:1px solid var(--linea);background:var(--noche2);color:var(--tinta);font:500 .93rem var(--texto)}
-  button:focus-visible,select:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--pron2);outline-offset:3px}
+  .barra{display:flex;flex-wrap:wrap;gap:12px 22px;align-items:center;justify-content:space-between;margin-bottom:6px}
+  .grupo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:var(--suave);font-size:.82rem}
+  .pills{display:inline-flex;border:1px solid var(--linea);border-radius:9px;overflow:hidden}
+  .pills button{padding:6px 12px;border:0;border-right:1px solid var(--linea);background:none;color:var(--suave);font:500 .85rem var(--mono);cursor:pointer;transition:background .2s,color .2s}
+  .pills button:last-child{border-right:0}.pills button:hover{color:var(--tinta)}
+  .pills button[aria-pressed="true"]{background:rgba(255,92,147,.2);color:var(--tinta);box-shadow:inset 0 -2px 0 var(--pron1)}
+  select{padding:6px 10px;border-radius:9px;border:1px solid var(--linea);background:#171a4a;color:var(--tinta);font:500 .85rem var(--mono)}
+  button:focus-visible,select:focus-visible,summary:focus-visible,canvas:focus-visible{outline:2px solid var(--pron2);outline-offset:2px}
 
-  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:2px;margin-top:22px;border-radius:18px;overflow:hidden;background:var(--linea)}
-  .kpi{padding:16px 20px;background:rgba(14,16,48,.7);backdrop-filter:blur(8px)}
-  .kpi .e{color:var(--suave);font-size:.86rem}
-  .kpi .v{font:800 1.7rem/1.2 var(--titulo);letter-spacing:-.02em}
-  .kpi .d{color:var(--suave);font-size:.86rem}
-  .f-alta{color:#6ee7a8}.f-media{color:var(--pron2)}.f-baja{color:var(--alerta)}
+  .lectura{padding:10px 0 4px;min-height:150px}
+  .lectura .que{color:var(--suave);font-size:.9rem;min-height:1.4em}
+  .lectura .fila{display:flex;align-items:baseline;gap:10px}
+  .lectura .num{font:500 clamp(3rem,7vw,5.2rem)/1.05 var(--sans);letter-spacing:-.035em;color:var(--tinta)}
+  .lectura .num.real{color:var(--hist)}
+  .lectura .u{font:400 1.2rem var(--mono);color:var(--suave)}
+  .lectura .rango{color:var(--suave);font:400 .88rem var(--mono);min-height:1.4em}
 
-  details{margin-top:16px;border-top:1px solid var(--linea);padding-top:4px}
-  summary{cursor:pointer;padding:10px 0;color:var(--suave);font-weight:500}
-  table{width:100%;border-collapse:collapse;font-size:.92rem}
-  th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--linea);font-variant-numeric:tabular-nums}
-  th:first-child,td:first-child{text-align:left}th{color:var(--suave);font-weight:500}
+  .lienzo{position:relative;height:min(46vh,400px);min-height:280px;margin-top:4px;touch-action:pan-y}
+  .lienzo canvas{width:100%;height:100%;display:block;cursor:crosshair}
+  #c3d{display:none;width:100%;height:100%}.lienzo.v3 #cv{display:none}.lienzo.v3 #c3d{display:block}
+  .pie-graf{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between;align-items:center;margin-top:8px;color:var(--tenue);font-size:.8rem}
+  .leyenda{display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--suave)}
+  .leyenda i{display:inline-block;width:14px;height:8px;border-radius:2px;margin-right:6px}
+
+  /* indicadores */
+  .kpi{padding:14px 18px}
+  .kpi .e{color:var(--suave);font-size:.82rem}
+  .kpi .v{font:500 1.8rem/1.25 var(--sans);letter-spacing:-.02em}
+  .kpi .d{color:var(--suave);font:400 .8rem var(--mono)}
+  .sube{color:var(--pron2)}.baja{color:var(--hist)}
+  .f-alta{color:var(--ok)}.f-media{color:var(--pron2)}.f-baja{color:var(--alerta)}
+  .medidor{height:4px;border-radius:2px;background:var(--linea);margin-top:8px;overflow:hidden}
+  .medidor i{display:block;height:100%;background:var(--ok);transition:width .5s}
+  .modelo{padding:14px 18px}.modelo h2,.tabla h2{font:600 .95rem var(--sans);margin:0 0 8px}
+  dl{display:grid;grid-template-columns:1fr auto;gap:5px 12px;margin:0;font-size:.82rem}
+  dt{color:var(--suave)}dd{margin:0;font-family:var(--mono);text-align:right}
+
+  .tabla{margin-top:16px;padding:6px 20px 14px}
+  .tabla summary{cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:10px 0;font-weight:600;list-style:none}
+  .tabla summary::-webkit-details-marker{display:none}
   .scroll{max-height:300px;overflow:auto}
-  #modelo{color:var(--suave);font-size:.9rem;margin:10px 0 0}
-  body.cargando .lienzo,body.cargando .kpis{opacity:.4;transition:opacity .25s}
-  #fondo{position:fixed;inset:0;width:100%;height:100%;z-index:-1;cursor:default}
-  #c3d{display:none;width:100%;height:100%}
-  .lienzo.v3 #cv{display:none}.lienzo.v3 #c3d{display:block}
-  .lienzo{border-radius:18px;background:rgba(12,14,41,.35);backdrop-filter:blur(2px)}
-  .tip3{color:var(--suave);font-size:.84rem;margin:2px 0 0;display:none}.tip3.on{display:block}
+  table{width:100%;border-collapse:collapse;font:400 .85rem var(--mono)}
+  th,td{padding:6px 8px;text-align:right;border-bottom:1px solid var(--linea)}
+  th:first-child,td:first-child{text-align:left}th{color:var(--suave);font-weight:400;position:sticky;top:0;background:#14174a}
+  .actualizado{color:var(--tenue);font-size:.8rem;margin-top:14px;text-align:right}
+  body.cargando .lienzo,body.cargando .lateral{opacity:.45;transition:opacity .25s}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
 <body>
 <canvas id="fondo" aria-hidden="true"></canvas>
 <main>
-  <div class="barra">
-    <b id="titulo">Pronóstico de consumo</b>
-    <span class="estado"><span class="punto" id="punto"></span><span id="estadoApi">Conectando…</span></span>
-  </div>
+  <header>
+    <div class="marca">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="3" y="18" width="6" height="13" rx="2" fill="#b9b4ff"/><rect x="12" y="11" width="6" height="20" rx="2" fill="#b9b4ff"/><rect x="21" y="6" width="6" height="25" rx="2" fill="#ff5c93"/><rect x="30" y="2" width="3" height="29" rx="1.5" fill="#ffc15a" opacity=".7"/></svg>
+      <div><h1 id="titulo">Predictor de consumo</h1><p id="subtitulo">Pronóstico horario con modelo SARIMA</p></div>
+    </div>
+    <div class="der">
+      <span class="reloj" id="reloj"></span>
+      <span class="estado"><span class="punto" id="punto"></span><span id="estadoApi">Conectando…</span></span>
+    </div>
+  </header>
 
   <div class="error" id="error" role="alert">
     <div><strong id="errTit"></strong><span id="errDet"></span></div>
-    <button type="button" id="reintentar">Reintentar</button>
+    <button type="button" class="boton" id="reintentar">Reintentar</button>
   </div>
 
-  <div id="resultado" hidden>
-    <section class="lectura" aria-live="polite">
-      <h1 id="serie">Hora de Colombia (UTC−5)</h1>
-      <div class="que" id="lQue"></div>
-      <div class="num" id="lNum">—</div>
-      <div class="rango" id="lRango"></div>
+  <div class="rejilla sin-datos" id="resultado">
+    <section class="panel principal" aria-label="Gráfica">
+      <div class="barra">
+        <div class="grupo"><span id="lh">Pronóstico</span><div class="pills" id="pH" role="group" aria-labelledby="lh"></div></div>
+        <div class="grupo"><span>Historia</span>
+          <select id="historia" aria-label="Historia mostrada"><option value="24">24 h</option><option value="48" selected>48 h</option><option value="96">4 días</option><option value="168">7 días</option></select></div>
+        <div class="grupo"><span>Confianza</span>
+          <select id="confianza" aria-label="Nivel de confianza"><option value="0.8">80 %</option><option value="0.9">90 %</option><option value="0.95" selected>95 %</option><option value="0.99">99 %</option></select></div>
+        <div class="grupo"><span>Vista</span><div class="pills" id="pV" role="group" aria-label="Tipo de gráfica"></div></div>
+      </div>
+      <div class="lectura" aria-live="polite">
+        <div class="que" id="lQue"></div>
+        <div class="fila"><span class="num" id="lNum">—</span><span class="u" id="lU"></span></div>
+        <div class="rango" id="lRango"></div>
+      </div>
+      <div class="lienzo" id="lienzo"><div id="c3d" aria-hidden="true"></div><canvas id="cv" tabindex="0" role="img" aria-label="Gráfica del histórico, el pronóstico y su intervalo de confianza. Recorre con las flechas para leer cada hora."></canvas></div>
+      <div class="pie-graf">
+        <div class="leyenda"><span><i style="background:var(--hist)"></i>Histórico</span><span><i style="background:linear-gradient(90deg,var(--pron1),var(--pron2))"></i>Pronóstico</span><span><i style="background:rgba(255,193,90,.35)"></i><span id="lbConf">Intervalo</span></span></div>
+        <span id="tip">Hora de Colombia (UTC−5)</span>
+      </div>
     </section>
-    <div class="lienzo" id="lienzo"><div id="c3d" aria-hidden="true"></div><canvas id="cv" tabindex="0" role="img" aria-label="Gráfica del histórico, el pronóstico y su intervalo de confianza. Recorre con el cursor o las flechas para leer cada hora."></canvas></div>
+
+    <aside class="lateral" aria-label="Indicadores">
+      <div class="panel kpi"><div class="e">Próxima hora</div><div class="v" id="kProx">—</div><div class="d" id="kProxD"></div></div>
+      <div class="panel kpi"><div class="e">Máximo esperado</div><div class="v" id="kMax">—</div><div class="d" id="kMaxD"></div></div>
+      <div class="panel kpi"><div class="e">Último dato real</div><div class="v" id="kUlt">—</div><div class="d" id="kUltD"></div></div>
+      <div class="panel kpi"><div class="e">Fiabilidad de los datos</div><div class="v" id="kFia">—</div><div class="d" id="kFiaD"></div><div class="medidor"><i id="kBar"></i></div></div>
+      <div class="panel modelo"><h2>Modelo</h2><dl id="modelo"><dt>Cargando…</dt><dd></dd></dl></div>
+    </aside>
   </div>
 
-  <section class="controles" aria-label="Controles">
-    <div class="grupo"><span>Vista</span><div class="pills" id="pV" role="group" aria-label="Tipo de gráfica"></div></div>
-    <div class="grupo"><span id="lh">Pronosticar</span><div class="pills" id="pH" role="group" aria-labelledby="lh"></div></div>
-    <div class="grupo"><span>Historia</span>
-      <select id="historia" aria-label="Historia mostrada">
-        <option value="24">24 h</option><option value="48" selected>48 h</option><option value="96">4 días</option><option value="168">1 semana</option></select></div>
-    <div class="grupo"><span>Confianza</span>
-      <select id="confianza" aria-label="Nivel de confianza">
-        <option value="0.8">80 %</option><option value="0.9">90 %</option><option value="0.95" selected>95 %</option><option value="0.99">99 %</option></select></div>
-  </section>
-  <p class="tip3" id="tip3">Arrastra para rotar la vista 3D · pasa el cursor por una columna para leerla. La caja translúcida es el intervalo de confianza.</p>
-
-  <div id="extra" hidden>
-    <section class="kpis" aria-label="Indicadores">
-      <div class="kpi"><div class="e">Máximo esperado</div><div class="v" id="kMax">—</div><div class="d" id="kMaxD"></div></div>
-      <div class="kpi"><div class="e">Último dato real</div><div class="v" id="kUlt">—</div><div class="d" id="kUltD"></div></div>
-      <div class="kpi"><div class="e">Fiabilidad de los datos</div><div class="v" id="kFia">—</div><div class="d" id="kFiaD"></div></div>
-    </section>
-    <details><summary>Valores hora a hora</summary>
-      <div class="scroll"><table><thead><tr><th>Hora (Colombia)</th><th>Pronóstico</th><th>Mínimo</th><th>Máximo</th></tr></thead><tbody id="filas"></tbody></table></div></details>
-    <p id="modelo"></p>
-  </div>
+  <details class="panel tabla" id="tabla" hidden>
+    <summary><span>Pronóstico hora a hora</span><button type="button" class="boton" id="csv">Descargar CSV</button></summary>
+    <div class="scroll"><table><thead><tr><th>Hora (Colombia)</th><th>Pronóstico</th><th>Mínimo</th><th>Máximo</th></tr></thead><tbody id="filas"></tbody></table></div>
+  </details>
+  <div class="actualizado" id="act"></div>
 </main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="/static/escena.js"></script>
 <script>
-const ZONA = "America/Bogota", OPC = [6, 12, 24, 48, 72];
+const UNIDAD = "";            // p. ej. "kWh" o "W": se muestra junto a los valores
+const ZONA = "America/Bogota", OPC = [6, 12, 24, 48, 72], REFRESCO_MS = 5 * 60 * 1000;
 let vista = "3d", horas = 12, datos = null, pts = [], nH = 0, progreso = 1, hover = null, sel = null, solicitud = 0, raf = 0;
 const $ = id => document.getElementById(id);
 const num = (n, d = 1) => Number(n).toLocaleString("es-CO", {minimumFractionDigits: d, maximumFractionDigits: d});
@@ -134,39 +166,39 @@ const fmt = (iso, o) => new Intl.DateTimeFormat("es-CO", {timeZone: ZONA, ...o})
 const hora = i => fmt(i, {hour: "numeric", minute: "2-digit", hour12: true});
 const diaHora = i => fmt(i, {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", hour12: true});
 const reducido = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const sufijo = UNIDAD ? " " + UNIDAD : "";
+
+// reloj de Colombia
+const tic = () => $("reloj").textContent = fmt(Date.now(), {weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit", second: "2-digit", hour12: true}) + " · COT";
+tic(); setInterval(tic, 1000);
 
 // ---- controles
-function pintarVista() {
-  $("pV").innerHTML = "";
-  [["3d", "3D"], ["2d", "2D"]].forEach(([k, n]) => {
-    const b = document.createElement("button"); b.type = "button"; b.textContent = n; b.setAttribute("aria-pressed", k === vista);
-    b.onclick = () => { vista = k; pintarVista(); aplicarVista(); };
-    $("pV").appendChild(b);
-  });
+function botones(id, lista, actual, alElegir) {
+  $(id).innerHTML = "";
+  lista.forEach(([k, n]) => { const b = document.createElement("button"); b.type = "button"; b.textContent = n; b.setAttribute("aria-pressed", k === actual); b.onclick = () => alElegir(k); $(id).appendChild(b); });
 }
+const pintarVista = () => botones("pV", [["3d", "3D"], ["2d", "2D"]], vista, k => { vista = k; pintarVista(); aplicarVista(); });
+const pintarPills = () => botones("pH", OPC.map(h => [h, h + " h"]), horas, h => { horas = h; pintarPills(); cargar(); });
 function aplicarVista() {
-  const v3 = vista === "3d";
-  $("lienzo").classList.toggle("v3", v3); $("tip3").classList.toggle("on", v3);
+  const v3 = vista === "3d"; $("lienzo").classList.toggle("v3", v3);
+  $("tip").textContent = v3 ? "Arrastra para rotar · hora de Colombia (UTC−5)" : "Hora de Colombia (UTC−5)";
   Escena.visible(v3); if (!v3) dibujar();
 }
 Escena.alElegir = i => { hover = i; lectura(i); };
 Escena.alSalir = () => { hover = null; lectura(nH); };
-function pintarPills() {
-  $("pH").innerHTML = "";
-  OPC.forEach(h => {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = h + " h"; b.setAttribute("aria-pressed", h === horas);
-    b.onclick = () => { horas = h; pintarPills(); cargar(); };
-    $("pH").appendChild(b);
-  });
-}
 ["historia", "confianza"].forEach(i => $(i).onchange = cargar);
 $("reintentar").onclick = cargar;
+$("csv").onclick = ev => {
+  ev.preventDefault(); if (!datos) return;
+  const f = ["hora_colombia;hora_utc;prediccion;limite_inferior;limite_superior",
+    ...datos.prediccion.map(p => [fmt(p.tiempo, {dateStyle: "short", timeStyle: "short", hour12: false}), p.tiempo, p.prediccion, p.limite_inferior, p.limite_superior].join(";"))].join("\n");
+  const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["\ufeff" + f], {type: "text/csv"})); a.download = "pronostico.csv"; a.click();
+};
 
 // ---- errores
 const TIT = {422: "Parámetros no válidos", 404: "No hay datos para mostrar", 502: "No se pudo leer la base de datos", 503: "El servicio aún no está listo"};
 const detalle = d => typeof d === "string" ? d : Array.isArray(d) ? d.map(e => e.msg).join(". ") : "La API no dio más detalles.";
-function error(t, d) { $("errTit").textContent = t; $("errDet").textContent = d; $("error").classList.add("visible"); $("resultado").hidden = true; $("extra").hidden = true; }
+function error(t, d) { $("errTit").textContent = t; $("errDet").textContent = d; $("error").classList.add("visible"); $("resultado").classList.add("sin-datos"); $("tabla").hidden = true; }
 
 // ---- carga
 async function cargar() {
@@ -190,24 +222,30 @@ function pintar() {
   pts = [...d.historico.map(x => ({t: x.tiempo, v: x.valor, real: true})),
          ...p.map(x => ({t: x.tiempo, v: x.prediccion, lo: x.limite_inferior, hi: x.limite_superior}))];
   nH = d.historico.length; hover = null; sel = null;
-  $("resultado").hidden = false; $("extra").hidden = false;
-  Escena.datos(pts, nH, d.confianza); aplicarVista();
-  lectura(nH);                                   // por defecto: próxima hora
+  $("resultado").classList.remove("sin-datos"); $("tabla").hidden = false;
+  $("lbConf").textContent = `Intervalo al ${Math.round(d.confianza * 100)} %`;
+  Escena.datos(pts, nH, d.confianza); aplicarVista(); lectura(nH);
 
+  const u = d.historico[nH - 1], sig = p[0];
+  $("kProx").textContent = num(sig.prediccion) + sufijo;
+  if (u) { const dv = (sig.prediccion - u.valor) / u.valor * 100;
+    $("kProxD").innerHTML = ""; const s = document.createElement("span"); s.className = dv >= 0 ? "sube" : "baja";
+    s.textContent = `${dv >= 0 ? "+" : "−"}${num(Math.abs(dv))} %`; $("kProxD").append(s, ` frente al último dato · ${hora(sig.tiempo)}`); }
   const mx = p.reduce((a, b) => b.prediccion > a.prediccion ? b : a);
-  $("kMax").textContent = num(mx.prediccion); $("kMaxD").textContent = diaHora(mx.tiempo);
-  const u = d.historico[nH - 1];
-  $("kUlt").textContent = u ? num(u.valor) : "—"; $("kUltD").textContent = diaHora(d.ultima_observacion);
+  $("kMax").textContent = num(mx.prediccion) + sufijo; $("kMaxD").textContent = `${diaHora(mx.tiempo)}`;
+  $("kUlt").textContent = u ? num(u.valor) + sufijo : "—"; $("kUltD").textContent = diaHora(d.ultima_observacion);
   const r = d.horas_rellenadas, t = d.horas_contexto_usadas, f = t ? r / t : 0;
-  const nivel = r === 0 ? ["Alta", "alta", "Sin horas rellenadas"] : f < .05 ? ["Media", "media", `${r} de ${t} h rellenadas`] : ["Baja", "baja", `${r} de ${t} h rellenadas: el sensor estuvo caído`];
+  const nivel = r === 0 ? ["Alta", "alta", "Sin horas rellenadas"] : f < .05 ? ["Media", "media", `${r} de ${t} h rellenadas`] : ["Baja", "baja", `${r} de ${t} h rellenadas · sensor caído`];
   $("kFia").textContent = nivel[0]; $("kFia").className = "v f-" + nivel[1]; $("kFiaD").textContent = nivel[2];
+  $("kBar").style.width = Math.max(4, (1 - Math.min(f * 10, 1)) * 100) + "%";
+  $("kBar").style.background = `var(--${nivel[1] === "alta" ? "ok" : nivel[1] === "media" ? "pron2" : "alerta"})`;
 
   $("filas").innerHTML = "";
   p.forEach(x => { const tr = document.createElement("tr");
     [diaHora(x.tiempo), num(x.prediccion), num(x.limite_inferior), num(x.limite_superior)].forEach(s => { const td = document.createElement("td"); td.textContent = s; tr.appendChild(td); });
     $("filas").appendChild(tr); });
+  $("act").textContent = `Actualizado ${hora(Date.now())} · se refresca cada 5 min · ${t} h de contexto`;
 
-  // animación de entrada: el pronóstico se traza de izquierda a derecha
   cancelAnimationFrame(raf);
   if (reducido) { progreso = 1; dibujar(); return; }
   const t0 = performance.now(); progreso = 0;
@@ -215,16 +253,13 @@ function pintar() {
   raf = requestAnimationFrame(paso);
 }
 
-// la lectura grande: valor de la hora bajo el cursor (o la próxima hora)
 function lectura(i) {
   const x = pts[i]; if (!x) return;
-  const pc = Math.round(datos.confianza * 100);
-  const n = $("lNum");
-  n.textContent = num(x.v); n.classList.toggle("real", !!x.real);
+  const n = $("lNum"); n.textContent = num(x.v); n.classList.toggle("real", !!x.real); $("lU").textContent = UNIDAD;
   if (x.real) { $("lQue").textContent = `Dato real · ${diaHora(x.t)}`; $("lRango").textContent = " "; }
   else {
     $("lQue").textContent = (i === nH && hover === null ? "Próxima hora · " : "Pronóstico · ") + diaHora(x.t);
-    $("lRango").textContent = `Entre ${num(x.lo, 0)} y ${num(x.hi, 0)} con ${pc} % de confianza`;
+    $("lRango").textContent = `Rango ${num(x.lo, 0)} – ${num(x.hi, 0)} (${Math.round(datos.confianza * 100)} % de confianza)`;
   }
 }
 
@@ -245,7 +280,7 @@ function dibujar() {
   let lo = Infinity, hi = -Infinity;
   pts.forEach(p => { lo = Math.min(lo, p.lo ?? p.v); hi = Math.max(hi, p.hi ?? p.v); });
   const pad = (hi - lo) * .08 || 1; y0 = lo - pad; y1 = hi + pad;
-  ctx.clearRect(0, 0, W, H); ctx.font = "12px 'Instrument Sans', sans-serif";
+  ctx.clearRect(0, 0, W, H); ctx.font = "12px 'IBM Plex Mono', monospace";
 
   // rejilla y ejes
   ctx.strokeStyle = "rgba(190,185,255,.12)"; ctx.fillStyle = "#9c9ac8"; ctx.lineWidth = 1; ctx.textAlign = "right"; ctx.textBaseline = "middle";
@@ -309,20 +344,29 @@ cv.addEventListener("keydown", ev => {
 });
 addEventListener("resize", () => dibujar());
 
-// ---- estado y modelo (informativo)
+
+// ---- estado y modelo
 async function estado() {
   try {
     const [rs, rm] = await Promise.all([fetch("/api/salud"), fetch("/api/modelo")]);
     const s = await rs.json();
     $("punto").className = "punto " + (s.modelo_cargado ? "ok" : "mal");
-    $("estadoApi").textContent = !s.modelo_cargado ? "Sin modelo cargado" : s.modo_demo ? "API activa · modo demo" : "API activa";
+    $("estadoApi").textContent = !s.modelo_cargado ? "Sin modelo cargado" : s.modo_demo ? "Modo demo" : "API en línea";
     if (s.field) $("titulo").textContent = "Pronóstico de " + s.field.replaceAll("_", " ").toLowerCase();
-    if (rm.ok) { const m = await rm.json(), t = m.metricas_test || {};
-      $("modelo").textContent = `Modelo SARIMA ${(m.order || []).join(",")} × ${(m.seasonal_order || []).join(",")} · error medio ${t.MAE != null ? num(t.MAE) : "—"} · entrenado ${m.entrenado_en || "—"}`; }
+    if (s.measurement) $("subtitulo").textContent = `Serie «${s.measurement}» · pronóstico horario con SARIMA`;
+    if (rm.ok) pintarModelo(await rm.json());
   } catch (_) { $("punto").className = "punto mal"; $("estadoApi").textContent = "API sin respuesta"; }
+}
+function pintarModelo(m) {
+  const t = m.metricas_test || {}, n = m.metricas_ingenua || {}, f = (o, k, d = 1) => o[k] != null ? num(o[k], d) : "—";
+  const mej = t.MAE != null && n.MAE ? Math.round((1 - t.MAE / n.MAE) * 100) + " %" : "—";
+  const filas = [["Orden (p,d,q)", (m.order || []).join(", ")], ["Estacional", (m.seasonal_order || []).join(", ")], ["Error medio (MAE)", f(t, "MAE")], ["Error % (MAPE)", f(t, "MAPE_%") + " %"],
+    ["Mejora vs. ingenuo", mej], ["Entrenado", m.entrenado_en || "—"]];
+  $("modelo").innerHTML = ""; filas.forEach(([a, b]) => { const dt = document.createElement("dt"), dd = document.createElement("dd"); dt.textContent = a; dd.textContent = b; $("modelo").append(dt, dd); });
 }
 
 pintarVista(); pintarPills(); estado(); cargar();
+setInterval(() => { if (!document.hidden) cargar(); }, REFRESCO_MS);
 </script>
 </body>
 </html>
